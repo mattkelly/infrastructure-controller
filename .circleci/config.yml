@@ -24,7 +24,7 @@ jobs:
           name: Vet
           command: make vet
       - run:
-          name: Unit test
+          name: Test
           command: make test
 
   build:
@@ -38,7 +38,7 @@ jobs:
           name: Default build
           command: make
 
-  build-and-publish-latest:
+  build-and-publish:
     docker:
       - image: circleci/golang:1.11.4
     working_directory: /go/src/github.com/containership/infrastructure-controller
@@ -46,10 +46,12 @@ jobs:
       - checkout
       - setup_remote_docker
       - run: |
-            export IMAGE_NAME=containership/infrastructure-controller
-            export IMAGE_TAG=latest
+            export IMAGE_NAME=$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+            export IMAGE_TAG=`if [ -n “$CIRCLE_TAG” ]; then echo latest; else echo $CIRCLE_TAG; fi`
+            echo "Building Docker image $IMAGE_NAME:$IMAGE_TAG"
             make
             echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin
+            echo "Pushing Docker image $IMAGE_NAME:$IMAGE_TAG"
             docker push $IMAGE_NAME:$IMAGE_TAG
             docker logout
 
@@ -65,7 +67,7 @@ workflows:
             branches:
               ignore: master # master runs the publish job instead
 
-      - build-and-publish-latest:
+      - build-and-publish:
           context: matt-fork
           requires:
             - test
@@ -74,6 +76,8 @@ workflows:
               only:
                 - master
                 - opt/deploy-fork
+            tags:
+              only: /^v.*/
 
   periodic:
     jobs:
@@ -81,7 +85,7 @@ workflows:
       - build
     triggers:
       - schedule:
-          cron: "0 12 * * *"
+          cron: "0 12 * * *" # noon every day
           filters:
             branches:
               only:
