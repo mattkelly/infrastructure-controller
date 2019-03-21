@@ -85,7 +85,7 @@ workflows:
       - build
     triggers:
       - schedule:
-          cron: "0 12 * * *" # noon every day
+          cron: "0 11 * * *" # noon every day
           filters:
             branches:
               only:
