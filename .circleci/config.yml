@@ -75,19 +75,5 @@ workflows:
             branches:
               only:
                 - master
-                - opt/deploy-fork
             tags:
               only: /^v.*/
-
-  periodic:
-    jobs:
-      - test
-      - build
-    triggers:
-      - schedule:
-          cron: "0 11 * * *" # noon every day
-          filters:
-            branches:
-              only:
-                - master
-                - opt/deploy-fork
